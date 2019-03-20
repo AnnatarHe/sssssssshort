@@ -23,6 +23,10 @@ type payload struct {
 	URL string `json:"url"`
 }
 
+func getRealLink(id int64) string {
+	return src.HOST_URL + "r/" + src.Encode(id)
+}
+
 func setResponse(writer http.ResponseWriter, statusCode int, url string) {
 	resp := payload{URL: url}
 
@@ -46,6 +50,8 @@ func shortHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: 可以加域名白名单限制呢
+
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 
@@ -65,7 +71,7 @@ func shortHandler(w http.ResponseWriter, r *http.Request) {
 	expection := src.DB.Get(&model, "SELECT * FROM `short_url` WHERE `src`=? LIMIT 1", req.URL)
 
 	if expection == nil {
-		setResponse(w, http.StatusOK, src.HOST_URL+src.Encode(model.ID))
+		setResponse(w, http.StatusOK, getRealLink(model.ID))
 		return
 	}
 
@@ -89,7 +95,7 @@ func shortHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	setResponse(w, http.StatusOK, src.HOST_URL+src.Encode(id))
+	setResponse(w, http.StatusOK, getRealLink(id))
 	return
 }
 
