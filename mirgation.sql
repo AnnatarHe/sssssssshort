@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS short_url(
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    src VARCHAR(255) NOT NULL DEFAULT "",
+    UNIQUE KEY unique_src (src)
+)
