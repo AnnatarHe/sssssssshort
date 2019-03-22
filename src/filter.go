@@ -2,17 +2,19 @@ package src
 
 import (
 	"errors"
-	"fmt"
-	"log"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 )
 
-func cacheKeyGen(ip string) string {
-	return fmt.Sprintf("rate:%s:count", ip)
+type ipTimes struct {
+	times     uint16
+	createdAt time.Time
 }
+
+type ipTimesMap map[string]ipTimes
+
+var ipMap ipTimesMap
 
 func IPFilter(request *http.Request) (bool, error) {
 	ip := request.Header.Get("X-Real-IP")
@@ -21,31 +23,33 @@ func IPFilter(request *http.Request) (bool, error) {
 		ip = strings.Split(request.RemoteAddr, ":")[0]
 	}
 
-	redisKey := cacheKeyGen(ip)
-	count, err := Cache.Get(redisKey).Result()
+	val, ok := ipMap[ip]
 
-	if err != nil {
+	if !ok {
 		// 说明可能是第一次登陆，加入 key
-		if err := Cache.Set(redisKey, 0, time.Hour*24).Err(); err != nil {
-			log.Println(err)
-			return false, err
+		val = ipTimes{
+			times:     0,
+			createdAt: time.Now(),
 		}
-		count = "0"
+
+		ipMap[ip] = val
 	}
 
-	countInt, err := strconv.Atoi(count)
-	if err != nil {
-		log.Println(err)
-		return false, err
+	if val.createdAt.Add(time.Minute * 60 * 24).After(time.Now()) {
+		delete(ipMap, ip)
+		return true, nil
 	}
 
 	// 每个ip每天限制 3000 个请求
-	if countInt > 3000 {
+	if val.times > 3000 {
 		err := errors.New("api request out of limit")
 		return false, err
 	}
 
-	go Cache.Incr(redisKey)
-	return true, nil
+	ipMap[ip] = ipTimes{
+		times:     val.times + 1,
+		createdAt: val.createdAt,
+	}
 
+	return true, nil
 }
