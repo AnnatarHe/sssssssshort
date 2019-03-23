@@ -24,7 +24,7 @@ type payload struct {
 }
 
 func getRealLink(id int64) string {
-	return src.HOST_URL + "r/" + src.Encode(id)
+	return src.HOST_URL + src.Encode(id)
 }
 
 func setResponse(writer http.ResponseWriter, statusCode int, url string) {
@@ -41,7 +41,7 @@ func setResponse(writer http.ResponseWriter, statusCode int, url string) {
 	writer.Write(buf)
 }
 
-func shortHandler(w http.ResponseWriter, r *http.Request) {
+func createHandler(w http.ResponseWriter, r *http.Request) {
 
 	pass, _ := src.IPFilter(r)
 
@@ -100,7 +100,7 @@ func shortHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func readHandler(w http.ResponseWriter, r *http.Request) {
-	key := strings.Split(r.URL.Path, "/")[2]
+	key := strings.Split(r.URL.Path, "/")[1]
 	if key == "" {
 		setResponse(w, http.StatusBadRequest, "")
 		return
@@ -128,15 +128,27 @@ func readHandler(w http.ResponseWriter, r *http.Request) {
 
 func init() {
 	src.InitDB()
-	src.InitRedis()
+}
+
+func dispatcher(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		createHandler(w, r)
+		return
+	}
+
+	if r.URL.Path == "/" {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("<h1>文档请访问： <a href='https://github.com/AnnatarHe/sssssssshort/tree/master/docs'>docs</a></h1>"))
+		return
+	}
+
+	// 读操作
+	readHandler(w, r)
+	return
 }
 
 func main() {
-	http.HandleFunc("/g", shortHandler)
-
-	// http.Handle("")
-
-	http.HandleFunc("/r/", readHandler)
+	http.HandleFunc("/", dispatcher)
 
 	if err := http.ListenAndServe(src.API_LISTEN, nil); err != nil {
 		panic(err)
