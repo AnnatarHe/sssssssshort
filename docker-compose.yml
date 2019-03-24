@@ -1,25 +1,22 @@
 version: '2'
 services:
     db:
-        image: mysql:5.7
+        image: mysql
         volumes:
-            - ~/.short-service/data:/var/lib/mysql
+            - ~/sites/short-url/data:/var/lib/mysql
         environment:
             - MYSQL_PASSWORD=password
             - MYSQL_DATABASE=short
             - MYSQL_USER=short
-    redis:
-        image: redis
+            - MYSQL_ROOT_PASSWORD=short
     api-server:
-        image: busybox
+        image: alpine
         volumes:
             - ~/sites/short-url/server:/go
         command: /go/up-short-url
         ports:
-            - "9654:9654"
+            - "9999:9999"
         depends_on:
             - db
-            - redis
         links:
             - db
-            - redis
