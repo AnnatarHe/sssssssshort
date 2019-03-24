@@ -12,9 +12,13 @@ type ipTimes struct {
 	createdAt time.Time
 }
 
-type ipTimesMap map[string]ipTimes
+type ipTimesMap map[string]*ipTimes
 
 var ipMap ipTimesMap
+
+func init() {
+	ipMap = make(ipTimesMap)
+}
 
 func IPFilter(request *http.Request) (bool, error) {
 	ip := request.Header.Get("X-Real-IP")
@@ -27,7 +31,7 @@ func IPFilter(request *http.Request) (bool, error) {
 
 	if !ok {
 		// 说明可能是第一次登陆，加入 key
-		val = ipTimes{
+		val = &ipTimes{
 			times:     0,
 			createdAt: time.Now(),
 		}
@@ -35,7 +39,7 @@ func IPFilter(request *http.Request) (bool, error) {
 		ipMap[ip] = val
 	}
 
-	if val.createdAt.Add(time.Minute * 60 * 24).After(time.Now()) {
+	if val.createdAt.Add(time.Minute * 60 * 24).Before(time.Now()) {
 		delete(ipMap, ip)
 		return true, nil
 	}
@@ -46,7 +50,7 @@ func IPFilter(request *http.Request) (bool, error) {
 		return false, err
 	}
 
-	ipMap[ip] = ipTimes{
+	ipMap[ip] = &ipTimes{
 		times:     val.times + 1,
 		createdAt: val.createdAt,
 	}

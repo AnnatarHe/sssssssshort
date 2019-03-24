@@ -37,12 +37,12 @@ func setResponse(writer http.ResponseWriter, statusCode int, url string) {
 		return
 	}
 
+	writer.Header().Set("Content-Type", "application/json")
 	writer.WriteHeader(statusCode)
 	writer.Write(buf)
 }
 
 func createHandler(w http.ResponseWriter, r *http.Request) {
-
 	pass, _ := src.IPFilter(r)
 
 	if !pass {
@@ -119,7 +119,7 @@ func readHandler(w http.ResponseWriter, r *http.Request) {
 	expection := src.DB.Get(&model, "SELECT * FROM `short_url` WHERE `id`=? LIMIT 1", id)
 	if expection != nil {
 		log.Println(expection)
-		setResponse(w, http.StatusOK, "")
+		setResponse(w, http.StatusNotFound, "")
 		return
 	}
 
@@ -137,8 +137,9 @@ func dispatcher(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.URL.Path == "/" {
+		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("<h1>文档请访问： <a href='https://github.com/AnnatarHe/sssssssshort/tree/master/docs'>docs</a></h1>"))
+		w.Write([]byte("<h1>文档请访问： <a href='https://github.com/AnnatarHe/sssssssshort/tree/master/docs/api.md'>docs</a></h1>"))
 		return
 	}
 
