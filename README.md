@@ -3,6 +3,13 @@ short url
 
 用来演示的短链服务~
 
+## 可以免费使用已经部署的 s.annatarhe.tech
+
+```bash
+http POST 'https://s.annatarhe.tech/' url='https://annatarhe.com/'
+```
+
+
 ## deploy
 
 ```bash
@@ -14,7 +21,7 @@ $ docker exec -it xxx(mysql 实例) mysql
 
 然后可以访问啦~
 
-### POST /g
+### POST /
 
 request
 
@@ -28,10 +35,9 @@ response
 
 ```
 {
-    url: "https://your.domain.name/r/1"
+    url: "https://your.domain.name/1"
 }
 ```
-
 
 ## 配置
 
